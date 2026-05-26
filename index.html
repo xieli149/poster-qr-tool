@@ -1,0 +1,1755 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>海报二维码替换工具</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --panel: #ffffff;
+      --panel-soft: #f8fafc;
+      --line: #d8dee8;
+      --line-strong: #aeb9c9;
+      --text: #162033;
+      --muted: #647083;
+      --primary: #1768e8;
+      --primary-deep: #0f4fb4;
+      --teal: #0f766e;
+      --gold: #c58a1d;
+      --danger: #c2410c;
+      --shadow: 0 16px 42px rgba(20, 31, 48, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, #f7f9fc 0%, #eef3f8 100%);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+    }
+
+    .app {
+      width: min(1480px, calc(100% - 32px));
+      margin: 16px auto;
+      display: grid;
+      grid-template-columns: 388px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel,
+    .preview-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      position: sticky;
+      top: 16px;
+      max-height: calc(100vh - 32px);
+      overflow: auto;
+    }
+
+    .panel-header {
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.25;
+      font-weight: 800;
+    }
+
+    .status-line {
+      margin-top: 8px;
+      min-height: 20px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .controls {
+      padding: 16px 18px 18px;
+    }
+
+    .section {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section:first-child {
+      padding-top: 0;
+    }
+
+    .section:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px;
+      color: #263247;
+      font-size: 15px;
+      font-weight: 750;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .field:first-of-type {
+      margin-top: 0;
+    }
+
+    label,
+    .field-label {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    input[type="url"],
+    input[type="number"],
+    input[type="text"] {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 11px;
+      color: var(--text);
+      background: #fff;
+      outline: none;
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    input[type="url"]:focus,
+    input[type="number"]:focus,
+    input[type="text"]:focus {
+      border-color: rgba(23, 104, 232, 0.62);
+      box-shadow: 0 0 0 3px rgba(23, 104, 232, 0.12);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+    }
+
+    .upload-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .upload-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .file-name {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 13px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .hidden-file {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .btn {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 13px;
+      color: var(--text);
+      background: #fff;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, color 140ms ease;
+    }
+
+    .btn:hover {
+      border-color: var(--line-strong);
+      background: #f8fafc;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn.primary {
+      border-color: var(--primary);
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .btn.primary:hover {
+      border-color: var(--primary-deep);
+      background: var(--primary-deep);
+    }
+
+    .btn.ghost {
+      border-color: transparent;
+      background: var(--panel-soft);
+    }
+
+    .btn.icon-only {
+      width: 38px;
+      min-height: 38px;
+      padding: 0;
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+      transform: none;
+    }
+
+    .btn[aria-disabled="true"] {
+      opacity: 0.48;
+    }
+
+    .icon {
+      width: 17px;
+      height: 17px;
+      flex: 0 0 auto;
+      stroke: currentColor;
+      stroke-width: 2.1;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 82px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .toggle {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel-soft);
+    }
+
+    .toggle + .toggle {
+      margin-top: 10px;
+    }
+
+    .toggle input {
+      width: 18px;
+      height: 18px;
+      margin: 1px 0 0;
+      accent-color: var(--primary);
+    }
+
+    .toggle strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .toggle span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .nudge-pad {
+      display: grid;
+      grid-template-columns: 42px 42px 42px;
+      grid-template-rows: 42px 42px 42px;
+      gap: 6px;
+      justify-content: start;
+      align-items: center;
+    }
+
+    .nudge-pad .up {
+      grid-column: 2;
+    }
+
+    .nudge-pad .left {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .nudge-pad .center {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    .nudge-pad .right {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    .nudge-pad .down {
+      grid-column: 2;
+      grid-row: 3;
+    }
+
+    .footer-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .export-result {
+      display: none;
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel-soft);
+    }
+
+    .export-result.show {
+      display: grid;
+      gap: 8px;
+    }
+
+    .export-result img {
+      width: 100%;
+      max-height: 220px;
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      object-fit: contain;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .export-result a {
+      color: var(--primary);
+      font-size: 13px;
+      text-decoration: none;
+    }
+
+    .export-result a:hover {
+      text-decoration: underline;
+    }
+
+    .export-result-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .preview-panel {
+      min-height: calc(100vh - 32px);
+      overflow: hidden;
+    }
+
+    .preview-toolbar {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .meta {
+      min-width: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 10px;
+      background: var(--panel-soft);
+      white-space: nowrap;
+    }
+
+    .canvas-shell {
+      height: calc(100vh - 90px);
+      min-height: 600px;
+      padding: 16px;
+      overflow: auto;
+      background:
+        linear-gradient(45deg, #e5eaf1 25%, transparent 25%),
+        linear-gradient(-45deg, #e5eaf1 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #e5eaf1 75%),
+        linear-gradient(-45deg, transparent 75%, #e5eaf1 75%);
+      background-color: #f7f9fc;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+      background-size: 20px 20px;
+    }
+
+    .canvas-wrap {
+      width: fit-content;
+      min-width: min(100%, 520px);
+      margin: 0 auto;
+      display: grid;
+      place-items: center;
+    }
+
+    canvas {
+      max-width: min(100%, 980px);
+      height: auto;
+      display: block;
+      border: 1px solid rgba(26, 36, 53, 0.16);
+      background: #fff;
+      box-shadow: 0 14px 40px rgba(26, 36, 53, 0.2);
+      cursor: default;
+      touch-action: none;
+    }
+
+    canvas.ready {
+      cursor: grab;
+    }
+
+    canvas.dragging {
+      cursor: grabbing;
+    }
+
+    .empty-state {
+      width: min(100%, 540px);
+      aspect-ratio: 9 / 14;
+      display: grid;
+      place-items: center;
+      border: 1px dashed var(--line-strong);
+      border-radius: 8px;
+      color: var(--muted);
+      background: #fff;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .empty-state strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text);
+      font-size: 18px;
+    }
+
+    @media (max-width: 1040px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        position: static;
+        max-height: none;
+      }
+
+      .preview-panel {
+        min-height: 620px;
+      }
+
+      .canvas-shell {
+        height: auto;
+        min-height: 520px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .app {
+        width: min(100% - 20px, 1480px);
+        margin: 10px auto;
+        gap: 10px;
+      }
+
+      .grid-2,
+      .footer-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="panel">
+      <div class="panel-header">
+        <h1>海报二维码替换工具</h1>
+        <div class="status-line" id="status">等待上传海报</div>
+      </div>
+
+      <div class="controls">
+        <section class="section">
+          <h2 class="section-title">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8 12 3 7 8"/><path d="M12 3v12"/></svg>
+            海报
+          </h2>
+          <div class="upload-row">
+            <div class="file-name" id="posterName">未选择文件</div>
+            <div class="upload-actions">
+              <button class="btn" id="pastePosterButton" type="button">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8"/><path d="M9 2h6a2 2 0 0 1 2 2v2H7V4a2 2 0 0 1 2-2Z"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M8 14h8"/><path d="M12 10v8"/></svg>
+                粘贴
+              </button>
+              <label class="btn" for="posterInput">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 13h4"/><path d="M12 11v4"/></svg>
+                上传
+              </label>
+            </div>
+            <input class="hidden-file" id="posterInput" type="file" accept="image/*">
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L11.5 4.43"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 1 0 7.07 7.07l1.33-1.33"/></svg>
+            链接
+          </h2>
+          <div class="field">
+            <label for="linkInput">目标链接</label>
+            <input id="linkInput" type="url" placeholder="https://..." autocomplete="off" spellcheck="false">
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/><path d="M18 18h3v3h-3z"/><path d="M18 14h3"/><path d="M14 18v3"/></svg>
+            二维码
+          </h2>
+
+          <div class="field">
+            <label>已有二维码图片</label>
+            <div class="upload-row">
+              <div class="file-name" id="qrImageName">未选择二维码图片</div>
+              <div class="upload-actions">
+                <button class="btn" id="pasteQrButton" type="button">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8"/><path d="M9 2h6a2 2 0 0 1 2 2v2H7V4a2 2 0 0 1 2-2Z"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M8 14h8"/><path d="M12 10v8"/></svg>
+                  粘贴
+                </button>
+                <label class="btn" for="qrInput">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 13h4"/><path d="M12 11v4"/></svg>
+                  上传
+                </label>
+              </div>
+              <input class="hidden-file" id="qrInput" type="file" accept="image/*">
+            </div>
+          </div>
+
+          <label class="toggle">
+            <input id="autoCropQrToggle" type="checkbox" checked>
+            <span>
+              <strong>自动裁剪二维码白边</strong>
+            </span>
+          </label>
+
+          <div class="field">
+            <label for="qrCropPadding">裁剪后保留白边</label>
+            <div class="range-row">
+              <input id="qrCropPadding" type="range" min="0" max="80" step="1" value="12">
+              <input id="qrCropPaddingNumber" type="number" min="0" max="80" step="1" value="12">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="qrCropInset">手动内缩裁剪</label>
+            <div class="range-row">
+              <input id="qrCropInset" type="range" min="0" max="25" step="1" value="0">
+              <input id="qrCropInsetNumber" type="number" min="0" max="25" step="1" value="0">
+            </div>
+          </div>
+
+          <label class="toggle">
+            <input id="whiteBaseToggle" type="checkbox" checked>
+            <span>
+              <strong>白底覆盖旧码</strong>
+            </span>
+          </label>
+
+          <div class="field">
+            <label for="qrMargin">二维码白边</label>
+            <div class="range-row">
+              <input id="qrMargin" type="range" min="1" max="4" step="1" value="2">
+              <input id="qrMarginNumber" type="number" min="1" max="4" step="1" value="2">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="basePadding">白底外扩</label>
+            <div class="range-row">
+              <input id="basePadding" type="range" min="0" max="200" step="1" value="2">
+              <input id="basePaddingNumber" type="number" min="0" max="200" step="1" value="2">
+            </div>
+          </div>
+
+          <label class="toggle">
+            <input id="logoToggle" type="checkbox">
+            <span>
+              <strong>中心 MedSci 标识</strong>
+            </span>
+          </label>
+
+          <div class="field">
+            <div class="upload-row">
+              <div class="file-name" id="logoName">未选择 logo</div>
+              <label class="btn" for="logoInput">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16l4.6-4.6a2 2 0 0 1 2.8 0L16 16"/><path d="M14 14l1.6-1.6a2 2 0 0 1 2.8 0L20 14"/><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>
+                Logo
+              </label>
+              <input class="hidden-file" id="logoInput" type="file" accept="image/*">
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9V5h4"/><path d="M19 9V5h-4"/><path d="M5 15v4h4"/><path d="M19 15v4h-4"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+            位置
+          </h2>
+
+          <div class="field">
+            <label for="sizeRange">大小</label>
+            <div class="range-row">
+              <input id="sizeRange" type="range" min="80" max="800" step="1" value="180" disabled>
+              <input id="sizeNumber" type="number" min="20" step="1" value="180" disabled>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label for="xNumber">X</label>
+              <input id="xNumber" type="number" min="0" step="1" value="0" disabled>
+            </div>
+            <div class="field">
+              <label for="yNumber">Y</label>
+              <input id="yNumber" type="number" min="0" step="1" value="0" disabled>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="nudgeStep">微调步长</label>
+            <input id="nudgeStep" type="number" min="1" max="100" step="1" value="5">
+          </div>
+
+          <div class="field">
+            <span class="field-label">微调</span>
+            <div class="nudge-pad">
+              <button class="btn icon-only up" data-nudge="0,-1" title="上移" disabled>
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+              </button>
+              <button class="btn icon-only left" data-nudge="-1,0" title="左移" disabled>
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <button class="btn icon-only center" id="resetButton" title="回到右下角" disabled>
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 3v6h6"/></svg>
+              </button>
+              <button class="btn icon-only right" data-nudge="1,0" title="右移" disabled>
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+              <button class="btn icon-only down" data-nudge="0,1" title="下移" disabled>
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <div class="footer-actions">
+          <button class="btn" id="clearButton">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/></svg>
+            清空
+          </button>
+          <a class="btn" id="openExportLink" href="#" aria-disabled="true">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+            打开 PNG
+          </a>
+          <button class="btn" id="copyExportButton" type="button" disabled>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+            复制 PNG
+          </button>
+          <button class="btn primary" id="exportButton" disabled>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+            导出 PNG
+          </button>
+        </div>
+        <div class="export-result" id="exportResult">
+          <img id="exportPreview" alt="导出 PNG 预览">
+          <div class="export-result-actions">
+            <a class="btn" id="exportTextLink" href="#">当前页打开</a>
+            <button class="btn" id="saveExportButton" type="button">保存 PNG</button>
+            <button class="btn" id="copyResultButton" type="button">复制 PNG</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="preview-panel">
+      <div class="preview-toolbar">
+        <div class="meta">
+          <span class="pill" id="posterMeta">海报尺寸：-</span>
+          <span class="pill" id="qrMeta">二维码：-</span>
+          <span class="pill" id="exportMeta">导出：PNG 原尺寸</span>
+        </div>
+      </div>
+      <div class="canvas-shell">
+        <div class="canvas-wrap">
+          <div class="empty-state" id="emptyState">
+            <div>
+              <strong>未载入海报</strong>
+            </div>
+          </div>
+          <canvas id="previewCanvas" tabindex="0" hidden></canvas>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="qrcode.min.js"></script>
+  <script>
+    const els = {
+      posterInput: document.querySelector("#posterInput"),
+      qrInput: document.querySelector("#qrInput"),
+      logoInput: document.querySelector("#logoInput"),
+      pastePosterButton: document.querySelector("#pastePosterButton"),
+      pasteQrButton: document.querySelector("#pasteQrButton"),
+      linkInput: document.querySelector("#linkInput"),
+      posterName: document.querySelector("#posterName"),
+      qrImageName: document.querySelector("#qrImageName"),
+      logoName: document.querySelector("#logoName"),
+      status: document.querySelector("#status"),
+      canvas: document.querySelector("#previewCanvas"),
+      emptyState: document.querySelector("#emptyState"),
+      posterMeta: document.querySelector("#posterMeta"),
+      qrMeta: document.querySelector("#qrMeta"),
+      exportMeta: document.querySelector("#exportMeta"),
+      autoCropQrToggle: document.querySelector("#autoCropQrToggle"),
+      qrCropPadding: document.querySelector("#qrCropPadding"),
+      qrCropPaddingNumber: document.querySelector("#qrCropPaddingNumber"),
+      qrCropInset: document.querySelector("#qrCropInset"),
+      qrCropInsetNumber: document.querySelector("#qrCropInsetNumber"),
+      whiteBaseToggle: document.querySelector("#whiteBaseToggle"),
+      qrMargin: document.querySelector("#qrMargin"),
+      qrMarginNumber: document.querySelector("#qrMarginNumber"),
+      basePadding: document.querySelector("#basePadding"),
+      basePaddingNumber: document.querySelector("#basePaddingNumber"),
+      logoToggle: document.querySelector("#logoToggle"),
+      sizeRange: document.querySelector("#sizeRange"),
+      sizeNumber: document.querySelector("#sizeNumber"),
+      xNumber: document.querySelector("#xNumber"),
+      yNumber: document.querySelector("#yNumber"),
+      nudgeStep: document.querySelector("#nudgeStep"),
+      resetButton: document.querySelector("#resetButton"),
+      clearButton: document.querySelector("#clearButton"),
+      openExportLink: document.querySelector("#openExportLink"),
+      copyExportButton: document.querySelector("#copyExportButton"),
+      exportResult: document.querySelector("#exportResult"),
+      exportPreview: document.querySelector("#exportPreview"),
+      exportTextLink: document.querySelector("#exportTextLink"),
+      saveExportButton: document.querySelector("#saveExportButton"),
+      copyResultButton: document.querySelector("#copyResultButton"),
+      exportButton: document.querySelector("#exportButton")
+    };
+
+    const ctx = els.canvas.getContext("2d", { alpha: false });
+    const qrCanvas = document.createElement("canvas");
+    const state = {
+      poster: null,
+      posterFileName: "",
+      logo: null,
+      logoFileName: "",
+      qrReady: false,
+      qrText: "",
+      qrSource: "",
+      qrImageFileName: "",
+      qrImageOriginal: null,
+      pasteTarget: "poster",
+      qrBox: { x: 0, y: 0, size: 180 },
+      defaultBox: { x: 0, y: 0, size: 180 },
+      drag: null,
+      qrGeneration: 0,
+      exportUrl: "",
+      exportBlob: null,
+      exportFileName: ""
+    };
+
+    function setStatus(message, tone = "muted") {
+      els.status.textContent = message;
+      els.status.style.color = tone === "danger" ? "var(--danger)" : tone === "ok" ? "var(--teal)" : "var(--muted)";
+    }
+
+    function setPasteTarget(target, announce = false) {
+      state.pasteTarget = target;
+      if (announce) {
+        setStatus(target === "qr" ? "现在可粘贴二维码图片" : "现在可粘贴海报图片");
+      }
+    }
+
+    function formatName(name) {
+      return name || "未选择文件";
+    }
+
+    function extensionFromMime(type) {
+      const map = {
+        "image/png": "png",
+        "image/jpeg": "jpg",
+        "image/webp": "webp",
+        "image/gif": "gif"
+      };
+      return map[type] || "png";
+    }
+
+    function imageFileFromBlob(blob, namePrefix = "粘贴海报") {
+      if (blob instanceof File && blob.name) return blob;
+      const ext = extensionFromMime(blob.type);
+      return new File([blob], `${namePrefix}.${ext}`, { type: blob.type || "image/png" });
+    }
+
+    function imageFileFromDataTransfer(dataTransfer, namePrefix = "粘贴海报") {
+      if (!dataTransfer) return null;
+
+      for (const file of Array.from(dataTransfer.files || [])) {
+        if (file.type && file.type.startsWith("image/")) {
+          return imageFileFromBlob(file, namePrefix);
+        }
+      }
+
+      for (const item of Array.from(dataTransfer.items || [])) {
+        if (item.kind === "file" && item.type && item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) return imageFileFromBlob(file, namePrefix);
+        }
+      }
+
+      return null;
+    }
+
+    async function imageFileFromClipboardApi(namePrefix = "粘贴海报") {
+      if (!navigator.clipboard || typeof navigator.clipboard.read !== "function") {
+        return null;
+      }
+
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        const imageType = item.types.find((type) => type.startsWith("image/"));
+        if (!imageType) continue;
+        const blob = await item.getType(imageType);
+        return imageFileFromBlob(blob, namePrefix);
+      }
+
+      return null;
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function roundRect(context, x, y, width, height, radius) {
+      const r = Math.min(radius, width / 2, height / 2);
+      context.beginPath();
+      context.moveTo(x + r, y);
+      context.arcTo(x + width, y, x + width, y + height, r);
+      context.arcTo(x + width, y + height, x, y + height, r);
+      context.arcTo(x, y + height, x, y, r);
+      context.arcTo(x, y, x + width, y, r);
+      context.closePath();
+    }
+
+    function loadImage(file) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        const url = URL.createObjectURL(file);
+        image.onload = () => {
+          URL.revokeObjectURL(url);
+          resolve(image);
+        };
+        image.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("图片读取失败"));
+        };
+        image.src = url;
+      });
+    }
+
+    function defaultQrBox(width, height) {
+      const size = Math.round(clamp(Math.min(width, height) * 0.19, 92, Math.min(width, height) * 0.42));
+      const marginX = Math.round(width * 0.067);
+      const marginY = Math.round(height * 0.023);
+      return {
+        size,
+        x: Math.round(width - size - marginX),
+        y: Math.round(height - size - marginY)
+      };
+    }
+
+    function posterReady() {
+      return Boolean(state.poster);
+    }
+
+    function outputReady() {
+      return posterReady() && state.qrReady;
+    }
+
+    function clampQrBox() {
+      if (!posterReady()) return;
+      const maxSize = Math.min(els.canvas.width, els.canvas.height);
+      state.qrBox.size = Math.round(clamp(Number(state.qrBox.size) || 1, 20, maxSize));
+      state.qrBox.x = Math.round(clamp(Number(state.qrBox.x) || 0, 0, els.canvas.width - state.qrBox.size));
+      state.qrBox.y = Math.round(clamp(Number(state.qrBox.y) || 0, 0, els.canvas.height - state.qrBox.size));
+    }
+
+    function syncPositionInputs() {
+      if (!posterReady()) {
+        [els.sizeRange, els.sizeNumber, els.xNumber, els.yNumber, els.resetButton].forEach((el) => el.disabled = true);
+        document.querySelectorAll("[data-nudge]").forEach((button) => button.disabled = true);
+        return;
+      }
+
+      const maxSize = Math.min(els.canvas.width, els.canvas.height);
+      els.sizeRange.disabled = false;
+      els.sizeNumber.disabled = false;
+      els.xNumber.disabled = false;
+      els.yNumber.disabled = false;
+      els.resetButton.disabled = false;
+      document.querySelectorAll("[data-nudge]").forEach((button) => button.disabled = false);
+      els.sizeRange.max = String(maxSize);
+      els.sizeNumber.max = String(maxSize);
+      els.xNumber.max = String(Math.max(0, els.canvas.width - state.qrBox.size));
+      els.yNumber.max = String(Math.max(0, els.canvas.height - state.qrBox.size));
+      els.sizeRange.value = String(state.qrBox.size);
+      els.sizeNumber.value = String(state.qrBox.size);
+      els.xNumber.value = String(state.qrBox.x);
+      els.yNumber.value = String(state.qrBox.y);
+    }
+
+    function updateMeta() {
+      if (posterReady()) {
+        els.posterMeta.textContent = `海报尺寸：${els.canvas.width} × ${els.canvas.height}`;
+      } else {
+        els.posterMeta.textContent = "海报尺寸：-";
+      }
+
+      if (outputReady()) {
+        els.qrMeta.textContent = `${state.qrSource === "image" ? "二维码图片" : "二维码"}：${state.qrBox.size}px`;
+      } else if (state.qrReady) {
+        els.qrMeta.textContent = state.qrSource === "image" ? "二维码图片：已载入" : "二维码：已生成";
+      } else if (state.qrText && !state.qrReady) {
+        els.qrMeta.textContent = "二维码：生成中";
+      } else {
+        els.qrMeta.textContent = "二维码：-";
+      }
+
+      els.exportButton.disabled = !outputReady();
+      els.copyExportButton.disabled = !outputReady();
+      els.canvas.classList.toggle("ready", outputReady());
+    }
+
+    function revokeExportUrl() {
+      if (!state.exportUrl) return;
+      URL.revokeObjectURL(state.exportUrl);
+      state.exportUrl = "";
+      state.exportBlob = null;
+      state.exportFileName = "";
+      els.openExportLink.href = "#";
+      els.openExportLink.setAttribute("aria-disabled", "true");
+      els.exportPreview.removeAttribute("src");
+      els.exportTextLink.href = "#";
+      els.exportResult.classList.remove("show");
+    }
+
+    function drawBuiltInLogo(context, size) {
+      const boxW = Math.round(size * 0.34);
+      const boxH = Math.round(size * 0.15);
+      const x = Math.round((size - boxW) / 2);
+      const y = Math.round((size - boxH) / 2);
+      roundRect(context, x, y, boxW, boxH, Math.round(boxH * 0.24));
+      context.fillStyle = "#ffffff";
+      context.fill();
+      context.lineWidth = Math.max(3, Math.round(size * 0.008));
+      context.strokeStyle = "#111827";
+      context.stroke();
+      context.fillStyle = "#111827";
+      context.font = `700 ${Math.round(boxH * 0.52)}px Georgia, "Times New Roman", serif`;
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText("MedSci", Math.round(size / 2), Math.round(size / 2 + boxH * 0.02));
+    }
+
+    function drawUploadedLogo(context, size) {
+      const box = Math.round(size * 0.23);
+      const inner = Math.round(size * 0.17);
+      const x = Math.round((size - box) / 2);
+      const y = Math.round((size - box) / 2);
+      roundRect(context, x, y, box, box, Math.round(box * 0.18));
+      context.fillStyle = "#ffffff";
+      context.fill();
+      const ratio = Math.min(inner / state.logo.naturalWidth, inner / state.logo.naturalHeight);
+      const w = Math.round(state.logo.naturalWidth * ratio);
+      const h = Math.round(state.logo.naturalHeight * ratio);
+      context.drawImage(state.logo, Math.round((size - w) / 2), Math.round((size - h) / 2), w, h);
+    }
+
+    function applyLogoToQr() {
+      if (!els.logoToggle.checked) return;
+      const qrCtx = qrCanvas.getContext("2d");
+      const size = qrCanvas.width;
+      if (state.logo) {
+        drawUploadedLogo(qrCtx, size);
+      } else {
+        drawBuiltInLogo(qrCtx, size);
+      }
+    }
+
+    function getQrImageWorkingCanvas(image) {
+      const maxSide = 1400;
+      const ratio = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+      const width = Math.max(1, Math.round(image.naturalWidth * ratio));
+      const height = Math.max(1, Math.round(image.naturalHeight * ratio));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, width, height);
+      context.drawImage(image, 0, 0, width, height);
+      return canvas;
+    }
+
+    function detectQrContentBounds(canvas) {
+      const context = canvas.getContext("2d");
+      const { width, height } = canvas;
+      const pixels = context.getImageData(0, 0, width, height).data;
+      const threshold = 245;
+      let minX = width;
+      let minY = height;
+      let maxX = -1;
+      let maxY = -1;
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const offset = (y * width + x) * 4;
+          const alpha = pixels[offset + 3];
+          if (alpha <= 10) continue;
+          const isWhite = pixels[offset] >= threshold && pixels[offset + 1] >= threshold && pixels[offset + 2] >= threshold;
+          if (isWhite) continue;
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        }
+      }
+
+      if (maxX < 0 || maxY < 0) {
+        return { x: 0, y: 0, width, height };
+      }
+
+      return {
+        x: minX,
+        y: minY,
+        width: maxX - minX + 1,
+        height: maxY - minY + 1
+      };
+    }
+
+    function squareCropBounds(bounds, canvasWidth, canvasHeight) {
+      const side = Math.min(Math.max(bounds.width, bounds.height), canvasWidth, canvasHeight);
+      let x = bounds.x + bounds.width / 2 - side / 2;
+      let y = bounds.y + bounds.height / 2 - side / 2;
+      x = clamp(x, 0, canvasWidth - side);
+      y = clamp(y, 0, canvasHeight - side);
+      return {
+        x: Math.round(x),
+        y: Math.round(y),
+        size: Math.round(side)
+      };
+    }
+
+    function redrawQrImageCanvas() {
+      if (!state.qrImageOriginal) return false;
+
+      const workingCanvas = getQrImageWorkingCanvas(state.qrImageOriginal);
+      let bounds = els.autoCropQrToggle.checked
+        ? detectQrContentBounds(workingCanvas)
+        : { x: 0, y: 0, width: workingCanvas.width, height: workingCanvas.height };
+
+      const padding = Math.max(0, Number(els.qrCropPadding.value) || 0);
+      bounds = {
+        x: clamp(bounds.x - padding, 0, workingCanvas.width),
+        y: clamp(bounds.y - padding, 0, workingCanvas.height),
+        width: clamp(bounds.width + padding * 2, 1, workingCanvas.width),
+        height: clamp(bounds.height + padding * 2, 1, workingCanvas.height)
+      };
+      bounds.width = Math.min(bounds.width, workingCanvas.width - bounds.x);
+      bounds.height = Math.min(bounds.height, workingCanvas.height - bounds.y);
+
+      const insetPercent = clamp(Number(els.qrCropInset.value) || 0, 0, 25) / 100;
+      const inset = Math.floor(Math.min(bounds.width, bounds.height) * insetPercent);
+      bounds = {
+        x: bounds.x + inset,
+        y: bounds.y + inset,
+        width: Math.max(1, bounds.width - inset * 2),
+        height: Math.max(1, bounds.height - inset * 2)
+      };
+
+      const crop = squareCropBounds(bounds, workingCanvas.width, workingCanvas.height);
+      qrCanvas.width = 1024;
+      qrCanvas.height = 1024;
+      const qrCtx = qrCanvas.getContext("2d");
+      qrCtx.fillStyle = "#ffffff";
+      qrCtx.fillRect(0, 0, qrCanvas.width, qrCanvas.height);
+      qrCtx.drawImage(workingCanvas, crop.x, crop.y, crop.size, crop.size, 0, 0, qrCanvas.width, qrCanvas.height);
+      return true;
+    }
+
+    function generateQr() {
+      const text = els.linkInput.value.trim();
+      state.qrText = text;
+      state.qrReady = false;
+      state.qrSource = "";
+      revokeExportUrl();
+      updateMeta();
+
+      if (!text) {
+        setStatus(posterReady() ? "请输入目标链接" : "等待上传海报");
+        render();
+        return;
+      }
+
+      if (!window.QRCode || typeof window.QRCode.toCanvas !== "function") {
+        setStatus("二维码库未加载，请确认 qrcode.min.js 与网页在同一目录", "danger");
+        return;
+      }
+
+      const generation = ++state.qrGeneration;
+      setStatus("正在生成二维码");
+      window.QRCode.toCanvas(qrCanvas, text, {
+        width: 1024,
+        margin: clamp(Math.round(Number(els.qrMargin.value) || 2), 1, 4),
+        errorCorrectionLevel: "H",
+        color: {
+          dark: "#000000",
+          light: "#ffffff"
+        }
+      }, (error) => {
+        if (generation !== state.qrGeneration) return;
+        if (error) {
+          state.qrReady = false;
+          setStatus("二维码生成失败，请检查链接内容", "danger");
+          updateMeta();
+          render();
+          return;
+        }
+        applyLogoToQr();
+        state.qrReady = true;
+        state.qrSource = "link";
+        state.qrImageFileName = "";
+        state.qrImageOriginal = null;
+        els.qrImageName.textContent = "由链接生成";
+        setStatus(posterReady() ? "二维码已生成，可拖拽调整" : "二维码已生成，等待上传海报", "ok");
+        render();
+      });
+    }
+
+    function render(options = {}) {
+      const forExport = Boolean(options.forExport);
+
+      if (!posterReady()) {
+        els.canvas.hidden = true;
+        els.emptyState.hidden = false;
+        els.exportButton.disabled = true;
+        syncPositionInputs();
+        updateMeta();
+        return;
+      }
+
+      els.emptyState.hidden = true;
+      els.canvas.hidden = false;
+
+      ctx.clearRect(0, 0, els.canvas.width, els.canvas.height);
+      ctx.drawImage(state.poster, 0, 0, els.canvas.width, els.canvas.height);
+
+      if (state.qrReady) {
+        clampQrBox();
+        const { x, y, size } = state.qrBox;
+        const pad = els.whiteBaseToggle.checked ? Math.max(0, Number(els.basePadding.value) || 0) : 0;
+        if (pad > 0) {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(Math.round(x - pad), Math.round(y - pad), Math.round(size + pad * 2), Math.round(size + pad * 2));
+        }
+        ctx.drawImage(qrCanvas, x, y, size, size);
+
+        if (!forExport) {
+          drawSelection(x, y, size);
+        }
+      }
+
+      syncPositionInputs();
+      updateMeta();
+    }
+
+    function drawSelection(x, y, size) {
+      ctx.save();
+      ctx.lineWidth = Math.max(2, Math.round(size * 0.015));
+      ctx.strokeStyle = "#1768e8";
+      ctx.setLineDash([Math.max(8, Math.round(size * 0.045)), Math.max(5, Math.round(size * 0.026))]);
+      ctx.strokeRect(x, y, size, size);
+      ctx.setLineDash([]);
+
+      const handle = getHandleSize();
+      ctx.fillStyle = "#1768e8";
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = Math.max(2, Math.round(handle * 0.12));
+      roundRect(ctx, x + size - handle / 2, y + size - handle / 2, handle, handle, Math.round(handle * 0.22));
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function getHandleSize() {
+      return clamp(Math.round(state.qrBox.size * 0.13), 16, 34);
+    }
+
+    function pointFromEvent(event) {
+      const rect = els.canvas.getBoundingClientRect();
+      return {
+        x: (event.clientX - rect.left) * (els.canvas.width / rect.width),
+        y: (event.clientY - rect.top) * (els.canvas.height / rect.height)
+      };
+    }
+
+    function inQrBox(point) {
+      const { x, y, size } = state.qrBox;
+      return point.x >= x && point.x <= x + size && point.y >= y && point.y <= y + size;
+    }
+
+    function inResizeHandle(point) {
+      const { x, y, size } = state.qrBox;
+      const handle = getHandleSize();
+      return point.x >= x + size - handle && point.x <= x + size + handle && point.y >= y + size - handle && point.y <= y + size + handle;
+    }
+
+    function setBox(next) {
+      revokeExportUrl();
+      Object.assign(state.qrBox, next);
+      clampQrBox();
+      render();
+    }
+
+    async function handlePosterFile(file, source = "upload") {
+      if (!file) return;
+      try {
+        setStatus("正在读取海报");
+        const image = await loadImage(file);
+        state.poster = image;
+        state.posterFileName = file.name || (source === "paste" ? "粘贴海报.png" : "");
+        els.posterName.textContent = formatName(state.posterFileName);
+        els.posterInput.value = "";
+        els.canvas.width = image.naturalWidth;
+        els.canvas.height = image.naturalHeight;
+        state.defaultBox = defaultQrBox(image.naturalWidth, image.naturalHeight);
+        state.qrBox = { ...state.defaultBox };
+        revokeExportUrl();
+        setStatus(state.qrReady ? "海报已加载，可拖拽调整" : "海报已加载，等待链接或二维码图片", state.qrReady ? "ok" : "muted");
+        render();
+      } catch (error) {
+        setStatus(error.message, "danger");
+      }
+    }
+
+    async function handleQrImageFile(file, source = "upload") {
+      if (!file) return;
+      try {
+        setStatus("正在读取二维码图片");
+        const image = await loadImage(file);
+        state.qrImageOriginal = image;
+        redrawQrImageCanvas();
+        state.qrReady = true;
+        state.qrSource = "image";
+        state.qrText = "";
+        state.qrImageFileName = file.name || (source === "paste" ? "粘贴二维码.png" : "");
+        els.qrImageName.textContent = formatName(state.qrImageFileName);
+        els.qrInput.value = "";
+        revokeExportUrl();
+        setStatus(posterReady() ? "二维码图片已载入，可拖拽调整" : "二维码图片已载入，等待上传海报", "ok");
+        render();
+      } catch (error) {
+        setStatus(error.message, "danger");
+      }
+    }
+
+    async function handleLogoFile(file) {
+      if (!file) return;
+      try {
+        const image = await loadImage(file);
+        state.logo = image;
+        state.logoFileName = file.name;
+        els.logoName.textContent = formatName(file.name);
+        els.logoToggle.checked = true;
+        generateQr();
+      } catch (error) {
+        setStatus(error.message, "danger");
+      }
+    }
+
+    function canvasToBlob(canvas) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error("图片生成失败"));
+          }
+        }, "image/png");
+      });
+    }
+
+    function exportFileName() {
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "");
+      const baseName = state.posterFileName ? state.posterFileName.replace(/\.[^.]+$/, "") : "poster";
+      return `${baseName}_二维码_${stamp}.png`;
+    }
+
+    function publishExportBlob(blob) {
+      revokeExportUrl();
+      const url = URL.createObjectURL(blob);
+      const fileName = exportFileName();
+      state.exportUrl = url;
+      state.exportBlob = blob;
+      state.exportFileName = fileName;
+      els.openExportLink.href = url;
+      els.openExportLink.removeAttribute("aria-disabled");
+      els.exportPreview.src = url;
+      els.exportTextLink.href = url;
+      els.exportResult.classList.add("show");
+      render();
+      return { blob, url, fileName };
+    }
+
+    async function generateExportImage(statusText) {
+      if (!outputReady()) {
+        setStatus(!posterReady() ? "请先上传海报" : "请先输入链接生成二维码，或上传/粘贴二维码图片", "danger");
+        return null;
+      }
+
+      setStatus(statusText);
+      els.exportButton.disabled = true;
+      els.copyExportButton.disabled = true;
+      render({ forExport: true });
+      const blob = await canvasToBlob(els.canvas);
+      return publishExportBlob(blob);
+    }
+
+    async function exportPng() {
+      try {
+        const result = await generateExportImage("正在导出 PNG");
+        if (!result) return;
+        const link = document.createElement("a");
+        link.download = result.fileName;
+        link.href = result.url;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setStatus("PNG 已生成；可点预览打开，或点“保存 PNG”", "ok");
+      } catch (error) {
+        setStatus(`导出失败：${error.message}`, "danger");
+        render();
+      }
+    }
+
+    async function copyExportedPng() {
+      if (!outputReady()) {
+        setStatus(!posterReady() ? "请先上传海报" : "请先输入链接生成二维码，或上传/粘贴二维码图片", "danger");
+        return;
+      }
+
+      try {
+        if (!navigator.clipboard || !window.ClipboardItem) {
+          throw new Error("当前浏览器不支持图片剪贴板");
+        }
+
+        setStatus("正在复制 PNG");
+        els.exportButton.disabled = true;
+        els.copyExportButton.disabled = true;
+        render({ forExport: true });
+        const blobPromise = canvasToBlob(els.canvas);
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": blobPromise })
+        ]);
+        const blob = await blobPromise;
+        publishExportBlob(blob);
+        setStatus("成品 PNG 已复制，可直接粘贴使用", "ok");
+      } catch (error) {
+        setStatus(`复制失败：${error.message}。可右键预览图复制或用 Chrome 打开`, "danger");
+        render();
+      }
+    }
+
+    async function saveExportedPng() {
+      try {
+        if (!state.exportBlob) {
+          const result = await generateExportImage("正在生成 PNG");
+          if (!result) return;
+        }
+
+        if (window.showSaveFilePicker) {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: state.exportFileName || "poster_qrcode.png",
+            types: [{
+              description: "PNG 图片",
+              accept: { "image/png": [".png"] }
+            }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(state.exportBlob);
+          await writable.close();
+          setStatus("PNG 已保存", "ok");
+          return;
+        }
+      } catch (error) {
+        if (error.name === "AbortError") {
+          setStatus("已取消保存");
+          return;
+        }
+      }
+
+      const link = document.createElement("a");
+      link.href = state.exportUrl;
+      link.download = state.exportFileName || "poster_qrcode.png";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setStatus("已触发保存；如果没有反应，请右键预览图保存", "ok");
+    }
+
+    function clearAll() {
+      state.poster = null;
+      state.posterFileName = "";
+      state.logo = null;
+      state.logoFileName = "";
+      state.qrReady = false;
+      state.qrText = "";
+      state.qrSource = "";
+      state.qrImageFileName = "";
+      state.qrImageOriginal = null;
+      state.pasteTarget = "poster";
+      state.qrBox = { x: 0, y: 0, size: 180 };
+      state.defaultBox = { x: 0, y: 0, size: 180 };
+      state.qrGeneration++;
+      revokeExportUrl();
+      els.posterInput.value = "";
+      els.qrInput.value = "";
+      els.logoInput.value = "";
+      els.linkInput.value = "";
+      els.posterName.textContent = "未选择文件";
+      els.qrImageName.textContent = "未选择二维码图片";
+      els.logoName.textContent = "未选择 logo";
+      els.logoToggle.checked = false;
+      els.autoCropQrToggle.checked = true;
+      els.qrCropPadding.value = "12";
+      els.qrCropPaddingNumber.value = "12";
+      els.qrCropInset.value = "0";
+      els.qrCropInsetNumber.value = "0";
+      els.qrMargin.value = "2";
+      els.qrMarginNumber.value = "2";
+      els.basePadding.value = "2";
+      els.basePaddingNumber.value = "2";
+      setStatus("等待上传海报");
+      render();
+    }
+
+    els.posterInput.addEventListener("change", (event) => {
+      handlePosterFile(event.target.files && event.target.files[0]);
+    });
+
+    els.qrInput.addEventListener("change", (event) => {
+      handleQrImageFile(event.target.files && event.target.files[0]);
+    });
+
+    els.pastePosterButton.addEventListener("click", async () => {
+      setPasteTarget("poster");
+      try {
+        setStatus("正在读取剪贴板");
+        const file = await imageFileFromClipboardApi("粘贴海报");
+        if (!file) {
+          setStatus("剪贴板里没有可读取的图片", "danger");
+          return;
+        }
+        await handlePosterFile(file, "paste");
+      } catch (error) {
+        setStatus("浏览器未开放剪贴板读取，请直接粘贴到页面", "danger");
+      }
+    });
+
+    els.pasteQrButton.addEventListener("click", async () => {
+      setPasteTarget("qr");
+      try {
+        setStatus("正在读取剪贴板二维码");
+        const file = await imageFileFromClipboardApi("粘贴二维码");
+        if (!file) {
+          setStatus("剪贴板里没有可读取的二维码图片", "danger");
+          return;
+        }
+        await handleQrImageFile(file, "paste");
+      } catch (error) {
+        setStatus("浏览器未开放剪贴板读取，请直接粘贴二维码图片", "danger");
+      }
+    });
+
+    els.pastePosterButton.addEventListener("focus", () => setPasteTarget("poster", true));
+    els.pasteQrButton.addEventListener("focus", () => setPasteTarget("qr", true));
+
+    document.addEventListener("paste", (event) => {
+      const target = state.pasteTarget === "qr" ? "qr" : "poster";
+      const file = imageFileFromDataTransfer(event.clipboardData, target === "qr" ? "粘贴二维码" : "粘贴海报");
+      if (!file) return;
+      event.preventDefault();
+      if (target === "qr") {
+        handleQrImageFile(file, "paste");
+      } else {
+        handlePosterFile(file, "paste");
+      }
+    });
+
+    els.logoInput.addEventListener("change", (event) => {
+      handleLogoFile(event.target.files && event.target.files[0]);
+    });
+
+    els.linkInput.addEventListener("input", () => {
+      window.clearTimeout(els.linkInput._timer);
+      els.linkInput._timer = window.setTimeout(generateQr, 180);
+    });
+
+    els.whiteBaseToggle.addEventListener("change", () => {
+      revokeExportUrl();
+      render();
+    });
+
+    els.logoToggle.addEventListener("change", () => {
+      if (state.qrSource === "image") {
+        setStatus("已上传的二维码图片不会自动叠加中心标识");
+        return;
+      }
+      generateQr();
+    });
+
+    function updateQrImageCrop() {
+      if (state.qrSource !== "image" || !state.qrImageOriginal) {
+        setStatus("裁剪只影响上传或粘贴的二维码图片");
+        return;
+      }
+      redrawQrImageCanvas();
+      revokeExportUrl();
+      setStatus("二维码裁剪已更新", "ok");
+      render();
+    }
+
+    els.autoCropQrToggle.addEventListener("change", updateQrImageCrop);
+
+    [els.qrCropPadding, els.qrCropPaddingNumber].forEach((input) => {
+      input.addEventListener("input", () => {
+        const value = clamp(Math.round(Number(input.value) || 0), 0, 80);
+        els.qrCropPadding.value = String(value);
+        els.qrCropPaddingNumber.value = String(value);
+        updateQrImageCrop();
+      });
+    });
+
+    [els.qrCropInset, els.qrCropInsetNumber].forEach((input) => {
+      input.addEventListener("input", () => {
+        const value = clamp(Math.round(Number(input.value) || 0), 0, 25);
+        els.qrCropInset.value = String(value);
+        els.qrCropInsetNumber.value = String(value);
+        updateQrImageCrop();
+      });
+    });
+
+    [els.qrMargin, els.qrMarginNumber].forEach((input) => {
+      input.addEventListener("input", () => {
+        const value = clamp(Math.round(Number(input.value) || 2), 1, 4);
+        els.qrMargin.value = String(value);
+        els.qrMarginNumber.value = String(value);
+        if (state.qrSource === "image") {
+          setStatus("二维码白边只影响链接生成的二维码");
+          return;
+        }
+        generateQr();
+      });
+    });
+
+    [els.basePadding, els.basePaddingNumber].forEach((input) => {
+      input.addEventListener("input", () => {
+        const value = clamp(Math.round(Number(input.value) || 0), 0, 200);
+        els.basePadding.value = String(clamp(value, 0, Number(els.basePadding.max)));
+        els.basePaddingNumber.value = String(value);
+        revokeExportUrl();
+        render();
+      });
+    });
+
+    [els.sizeRange, els.sizeNumber].forEach((input) => {
+      input.addEventListener("input", () => {
+        setBox({ size: Number(input.value) || state.qrBox.size });
+      });
+    });
+
+    els.xNumber.addEventListener("input", () => {
+      setBox({ x: Number(els.xNumber.value) || 0 });
+    });
+
+    els.yNumber.addEventListener("input", () => {
+      setBox({ y: Number(els.yNumber.value) || 0 });
+    });
+
+    document.querySelectorAll("[data-nudge]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!posterReady()) return;
+        const [dx, dy] = button.dataset.nudge.split(",").map(Number);
+        const step = clamp(Number(els.nudgeStep.value) || 1, 1, 100);
+        setBox({
+          x: state.qrBox.x + dx * step,
+          y: state.qrBox.y + dy * step
+        });
+      });
+    });
+
+    els.resetButton.addEventListener("click", () => {
+      if (!posterReady()) return;
+      revokeExportUrl();
+      state.qrBox = { ...state.defaultBox };
+      render();
+    });
+
+    els.clearButton.addEventListener("click", clearAll);
+    els.exportButton.addEventListener("click", exportPng);
+    els.copyExportButton.addEventListener("click", copyExportedPng);
+    els.saveExportButton.addEventListener("click", saveExportedPng);
+    els.copyResultButton.addEventListener("click", copyExportedPng);
+
+    [els.openExportLink, els.exportTextLink].forEach((link) => {
+      link.addEventListener("click", (event) => {
+        if (!state.exportUrl) {
+          event.preventDefault();
+          setStatus("请先点击“导出 PNG”生成图片", "danger");
+        }
+      });
+    });
+
+    els.exportPreview.addEventListener("click", () => {
+      if (!state.exportUrl) return;
+      window.location.href = state.exportUrl;
+    });
+
+    els.canvas.addEventListener("pointerdown", (event) => {
+      if (!outputReady()) return;
+      const point = pointFromEvent(event);
+      if (!inQrBox(point) && !inResizeHandle(point)) return;
+      event.preventDefault();
+      els.canvas.setPointerCapture(event.pointerId);
+      const mode = inResizeHandle(point) ? "resize" : "move";
+      state.drag = {
+        mode,
+        pointerId: event.pointerId,
+        startPoint: point,
+        startBox: { ...state.qrBox }
+      };
+      els.canvas.classList.add("dragging");
+    });
+
+    els.canvas.addEventListener("pointermove", (event) => {
+      if (!state.drag || state.drag.pointerId !== event.pointerId) return;
+      const point = pointFromEvent(event);
+      const dx = point.x - state.drag.startPoint.x;
+      const dy = point.y - state.drag.startPoint.y;
+      if (state.drag.mode === "move") {
+        state.qrBox.x = state.drag.startBox.x + dx;
+        state.qrBox.y = state.drag.startBox.y + dy;
+      } else {
+        state.qrBox.size = state.drag.startBox.size + Math.max(dx, dy);
+      }
+      clampQrBox();
+      render();
+    });
+
+    function endPointer(event) {
+      if (!state.drag || state.drag.pointerId !== event.pointerId) return;
+      state.drag = null;
+      els.canvas.classList.remove("dragging");
+    }
+
+    els.canvas.addEventListener("pointerup", endPointer);
+    els.canvas.addEventListener("pointercancel", endPointer);
+
+    els.canvas.addEventListener("keydown", (event) => {
+      if (!posterReady()) return;
+      const step = event.shiftKey ? 10 : 1;
+      const changes = {
+        ArrowUp: { y: state.qrBox.y - step },
+        ArrowDown: { y: state.qrBox.y + step },
+        ArrowLeft: { x: state.qrBox.x - step },
+        ArrowRight: { x: state.qrBox.x + step }
+      };
+      if (!changes[event.key]) return;
+      event.preventDefault();
+      setBox(changes[event.key]);
+    });
+
+    render();
+  </script>
+</body>
+</html>

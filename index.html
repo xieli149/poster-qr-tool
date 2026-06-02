@@ -275,6 +275,51 @@
       align-items: center;
     }
 
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel-soft);
+    }
+
+    .segmented label {
+      position: relative;
+      min-width: 0;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .segmented input {
+      position: absolute;
+      inset: 0;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .segmented span {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      padding: 7px 8px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 13px;
+      line-height: 1.25;
+      transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
+    }
+
+    .segmented input:checked + span {
+      color: var(--primary);
+      background: #ffffff;
+      box-shadow: 0 1px 4px rgba(20, 31, 48, 0.12);
+    }
+
     .toggle {
       display: grid;
       grid-template-columns: auto minmax(0, 1fr);
@@ -645,11 +690,32 @@
           <label class="toggle">
             <input id="logoToggle" type="checkbox">
             <span>
-              <strong>中心 MedSci 标识</strong>
+              <strong>中心标识</strong>
+              自定义文字或上传 logo 图片，叠加在二维码中间
             </span>
           </label>
 
           <div class="field">
+            <span class="field-label">标识类型</span>
+            <div class="segmented" role="radiogroup" aria-label="中心标识类型">
+              <label>
+                <input id="logoModeText" name="logoMode" type="radio" value="text" checked>
+                <span>文字</span>
+              </label>
+              <label>
+                <input id="logoModeImage" name="logoMode" type="radio" value="image">
+                <span>图片</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field" id="logoTextField">
+            <label for="logoTextInput">中心文案</label>
+            <input id="logoTextInput" type="text" maxlength="16" value="MedSci" placeholder="MedSci">
+          </div>
+
+          <div class="field" id="logoImageField" hidden>
+            <label>中心 logo 图片</label>
             <div class="upload-row">
               <div class="file-name" id="logoName">未选择 logo</div>
               <label class="btn" for="logoInput">
@@ -792,6 +858,11 @@
       basePadding: document.querySelector("#basePadding"),
       basePaddingNumber: document.querySelector("#basePaddingNumber"),
       logoToggle: document.querySelector("#logoToggle"),
+      logoModeText: document.querySelector("#logoModeText"),
+      logoModeImage: document.querySelector("#logoModeImage"),
+      logoTextInput: document.querySelector("#logoTextInput"),
+      logoTextField: document.querySelector("#logoTextField"),
+      logoImageField: document.querySelector("#logoImageField"),
       sizeRange: document.querySelector("#sizeRange"),
       sizeNumber: document.querySelector("#sizeNumber"),
       xNumber: document.querySelector("#xNumber"),
@@ -1015,9 +1086,49 @@
       els.exportResult.classList.remove("show");
     }
 
-    function drawBuiltInLogo(context, size) {
-      const boxW = Math.round(size * 0.34);
-      const boxH = Math.round(size * 0.15);
+    function centerLogoMode() {
+      return els.logoModeImage.checked ? "image" : "text";
+    }
+
+    function centerLogoText() {
+      return (els.logoTextInput.value || "").trim() || "MedSci";
+    }
+
+    function syncLogoControls() {
+      const imageMode = centerLogoMode() === "image";
+      els.logoTextField.hidden = imageMode;
+      els.logoImageField.hidden = !imageMode;
+    }
+
+    function redrawCurrentQr(message = "中心标识已更新") {
+      if (state.qrSource === "image" && state.qrImageOriginal) {
+        redrawQrImageCanvas();
+        revokeExportUrl();
+        setStatus(message, "ok");
+        render();
+        return;
+      }
+
+      generateQr();
+    }
+
+    function drawTextLogo(context, size) {
+      const text = centerLogoText();
+      const boxH = Math.round(size * 0.16);
+      const minBoxW = Math.round(size * 0.30);
+      const maxBoxW = Math.round(size * 0.54);
+      let fontSize = Math.round(boxH * 0.52);
+      const fontFamily = '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif';
+
+      context.font = `800 ${fontSize}px ${fontFamily}`;
+      let textWidth = context.measureText(text).width;
+      let boxW = Math.round(clamp(textWidth + boxH * 0.8, minBoxW, maxBoxW));
+      while (fontSize > 12 && textWidth > boxW - boxH * 0.56) {
+        fontSize -= 1;
+        context.font = `800 ${fontSize}px ${fontFamily}`;
+        textWidth = context.measureText(text).width;
+      }
+
       const x = Math.round((size - boxW) / 2);
       const y = Math.round((size - boxH) / 2);
       roundRect(context, x, y, boxW, boxH, Math.round(boxH * 0.24));
@@ -1027,10 +1138,10 @@
       context.strokeStyle = "#111827";
       context.stroke();
       context.fillStyle = "#111827";
-      context.font = `700 ${Math.round(boxH * 0.52)}px Georgia, "Times New Roman", serif`;
+      context.font = `800 ${fontSize}px ${fontFamily}`;
       context.textAlign = "center";
       context.textBaseline = "middle";
-      context.fillText("MedSci", Math.round(size / 2), Math.round(size / 2 + boxH * 0.02));
+      context.fillText(text, Math.round(size / 2), Math.round(size / 2 + boxH * 0.02), Math.round(boxW - boxH * 0.55));
     }
 
     function drawUploadedLogo(context, size) {
@@ -1051,10 +1162,12 @@
       if (!els.logoToggle.checked) return;
       const qrCtx = qrCanvas.getContext("2d");
       const size = qrCanvas.width;
-      if (state.logo) {
+      if (centerLogoMode() === "image" && state.logo) {
         drawUploadedLogo(qrCtx, size);
-      } else {
-        drawBuiltInLogo(qrCtx, size);
+        return;
+      }
+      if (centerLogoMode() === "text") {
+        drawTextLogo(qrCtx, size);
       }
     }
 
@@ -1156,6 +1269,7 @@
       qrCtx.fillStyle = "#ffffff";
       qrCtx.fillRect(0, 0, qrCanvas.width, qrCanvas.height);
       qrCtx.drawImage(workingCanvas, crop.x, crop.y, crop.size, crop.size, 0, 0, qrCanvas.width, qrCanvas.height);
+      applyLogoToQr();
       return true;
     }
 
@@ -1343,7 +1457,9 @@
         state.logoFileName = file.name;
         els.logoName.textContent = formatName(file.name);
         els.logoToggle.checked = true;
-        generateQr();
+        els.logoModeImage.checked = true;
+        syncLogoControls();
+        redrawCurrentQr("logo 图片已更新");
       } catch (error) {
         setStatus(error.message, "danger");
       }
@@ -1504,6 +1620,9 @@
       els.qrImageName.textContent = "未选择二维码图片";
       els.logoName.textContent = "未选择 logo";
       els.logoToggle.checked = false;
+      els.logoModeText.checked = true;
+      els.logoTextInput.value = "MedSci";
+      syncLogoControls();
       els.autoCropQrToggle.checked = true;
       els.qrCropPadding.value = "12";
       els.qrCropPaddingNumber.value = "12";
@@ -1585,11 +1704,26 @@
     });
 
     els.logoToggle.addEventListener("change", () => {
-      if (state.qrSource === "image") {
-        setStatus("已上传的二维码图片不会自动叠加中心标识");
-        return;
-      }
-      generateQr();
+      syncLogoControls();
+      redrawCurrentQr(els.logoToggle.checked ? "中心标识已开启" : "中心标识已关闭");
+    });
+
+    [els.logoModeText, els.logoModeImage].forEach((input) => {
+      input.addEventListener("change", () => {
+        syncLogoControls();
+        if (centerLogoMode() === "image" && !state.logo) {
+          setStatus("已切到图片标识，请上传 logo 图片");
+        }
+        redrawCurrentQr();
+      });
+    });
+
+    els.logoTextInput.addEventListener("input", () => {
+      els.logoToggle.checked = true;
+      window.clearTimeout(els.logoTextInput._timer);
+      els.logoTextInput._timer = window.setTimeout(() => {
+        redrawCurrentQr("中心文案已更新");
+      }, 180);
     });
 
     function updateQrImageCrop() {
@@ -1753,6 +1887,7 @@
       setBox(changes[event.key]);
     });
 
+    syncLogoControls();
     render();
   </script>
 </body>

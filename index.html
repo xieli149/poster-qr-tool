@@ -38,7 +38,8 @@
     }
 
     button,
-    input {
+    input,
+    select {
       font: inherit;
     }
 
@@ -138,7 +139,8 @@
 
     input[type="url"],
     input[type="number"],
-    input[type="text"] {
+    input[type="text"],
+    select {
       width: 100%;
       min-height: 40px;
       border: 1px solid var(--line);
@@ -152,7 +154,8 @@
 
     input[type="url"]:focus,
     input[type="number"]:focus,
-    input[type="text"]:focus {
+    input[type="text"]:focus,
+    select:focus {
       border-color: rgba(23, 104, 232, 0.62);
       box-shadow: 0 0 0 3px rgba(23, 104, 232, 0.12);
     }
@@ -160,6 +163,16 @@
     input[type="range"] {
       width: 100%;
       accent-color: var(--primary);
+    }
+
+    input[type="color"] {
+      width: 48px;
+      min-height: 40px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
     }
 
     .upload-row {
@@ -273,6 +286,19 @@
       grid-template-columns: minmax(0, 1fr) 82px;
       gap: 10px;
       align-items: center;
+    }
+
+    .color-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+    }
+
+    .inline-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
     }
 
     .segmented {
@@ -688,6 +714,83 @@
           </div>
 
           <label class="toggle">
+            <input id="beautyToggle" type="checkbox">
+            <span>
+              <strong>二维码美化</strong>
+              做成明显可扫的设计组件，可单独保存美化二维码
+            </span>
+          </label>
+
+          <div class="field">
+            <label for="beautyPreset">美化预设</label>
+            <select id="beautyPreset">
+              <option value="card">白卡精致</option>
+              <option value="live">直播醒目</option>
+              <option value="blueGold">蓝金商务</option>
+              <option value="brand">品牌简洁</option>
+              <option value="classic">稳妥黑白</option>
+            </select>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label for="qrShape">码点形状</label>
+              <select id="qrShape">
+                <option value="square">方块</option>
+                <option value="round">圆角</option>
+                <option value="dot">圆点</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="qrFrameStyle">外框样式</label>
+              <select id="qrFrameStyle">
+                <option value="none">无外框</option>
+                <option value="card">白卡</option>
+                <option value="border">描边</option>
+                <option value="shadow">阴影卡片</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="field-label">二维码颜色</span>
+            <div class="color-row">
+              <input id="qrDarkColor" type="color" value="#111827" aria-label="前景色">
+              <input id="qrDarkText" type="text" value="#111827" aria-label="前景色文本">
+              <input id="qrLightColor" type="color" value="#ffffff" aria-label="背景色">
+              <input id="qrLightText" type="text" value="#ffffff" aria-label="背景色文本">
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label for="qrTitlePosition">标题位置</label>
+              <select id="qrTitlePosition">
+                <option value="bottom">下方</option>
+                <option value="top">上方</option>
+                <option value="none">不显示</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="qrTitleText">标题文案</label>
+              <input id="qrTitleText" type="text" maxlength="18" value="扫码观看直播" placeholder="扫码观看直播">
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="inline-actions">
+              <button class="btn" id="copyQrOnlyButton" type="button" disabled>
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+                复制二维码
+              </button>
+              <button class="btn" id="saveQrOnlyButton" type="button" disabled>
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                保存二维码
+              </button>
+            </div>
+          </div>
+
+          <label class="toggle">
             <input id="logoToggle" type="checkbox">
             <span>
               <strong>中心标识</strong>
@@ -857,6 +960,18 @@
       qrMarginNumber: document.querySelector("#qrMarginNumber"),
       basePadding: document.querySelector("#basePadding"),
       basePaddingNumber: document.querySelector("#basePaddingNumber"),
+      beautyToggle: document.querySelector("#beautyToggle"),
+      beautyPreset: document.querySelector("#beautyPreset"),
+      qrShape: document.querySelector("#qrShape"),
+      qrFrameStyle: document.querySelector("#qrFrameStyle"),
+      qrDarkColor: document.querySelector("#qrDarkColor"),
+      qrDarkText: document.querySelector("#qrDarkText"),
+      qrLightColor: document.querySelector("#qrLightColor"),
+      qrLightText: document.querySelector("#qrLightText"),
+      qrTitlePosition: document.querySelector("#qrTitlePosition"),
+      qrTitleText: document.querySelector("#qrTitleText"),
+      copyQrOnlyButton: document.querySelector("#copyQrOnlyButton"),
+      saveQrOnlyButton: document.querySelector("#saveQrOnlyButton"),
       logoToggle: document.querySelector("#logoToggle"),
       logoModeText: document.querySelector("#logoModeText"),
       logoModeImage: document.querySelector("#logoModeImage"),
@@ -900,6 +1015,54 @@
       exportUrl: "",
       exportBlob: null,
       exportFileName: ""
+    };
+
+    const beautyPresets = {
+      card: {
+        enabled: true,
+        dark: "#111827",
+        light: "#ffffff",
+        shape: "round",
+        frame: "card",
+        titlePosition: "bottom",
+        title: "扫码观看直播"
+      },
+      live: {
+        enabled: true,
+        dark: "#061b33",
+        light: "#ffffff",
+        shape: "dot",
+        frame: "shadow",
+        titlePosition: "bottom",
+        title: "扫码观看直播"
+      },
+      blueGold: {
+        enabled: true,
+        dark: "#102a5c",
+        light: "#fff8e6",
+        shape: "round",
+        frame: "border",
+        titlePosition: "bottom",
+        title: "扫码了解详情"
+      },
+      brand: {
+        enabled: true,
+        dark: "#0f172a",
+        light: "#ffffff",
+        shape: "round",
+        frame: "card",
+        titlePosition: "none",
+        title: "扫码了解详情"
+      },
+      classic: {
+        enabled: false,
+        dark: "#000000",
+        light: "#ffffff",
+        shape: "square",
+        frame: "none",
+        titlePosition: "none",
+        title: ""
+      }
     };
 
     function setStatus(message, tone = "muted") {
@@ -1070,6 +1233,8 @@
 
       els.exportButton.disabled = !outputReady();
       els.copyExportButton.disabled = !outputReady();
+      els.copyQrOnlyButton.disabled = !state.qrReady;
+      els.saveQrOnlyButton.disabled = !state.qrReady;
       els.canvas.classList.toggle("ready", outputReady());
     }
 
@@ -1084,6 +1249,250 @@
       els.exportPreview.removeAttribute("src");
       els.exportTextLink.href = "#";
       els.exportResult.classList.remove("show");
+    }
+
+    function isBeautyEnabled() {
+      return els.beautyToggle.checked;
+    }
+
+    function normalizeHexColor(value, fallback) {
+      const text = String(value || "").trim();
+      const match = text.match(/^#?([0-9a-fA-F]{6})$/);
+      return match ? `#${match[1].toLowerCase()}` : fallback;
+    }
+
+    function setBeautyColor(kind, value) {
+      const fallback = kind === "dark" ? "#111827" : "#ffffff";
+      const color = normalizeHexColor(value, fallback);
+      if (kind === "dark") {
+        els.qrDarkColor.value = color;
+        els.qrDarkText.value = color;
+      } else {
+        els.qrLightColor.value = color;
+        els.qrLightText.value = color;
+      }
+    }
+
+    function colorLuminance(hex) {
+      const color = normalizeHexColor(hex, "#000000").slice(1);
+      const parts = [0, 2, 4].map((index) => {
+        const value = parseInt(color.slice(index, index + 2), 16) / 255;
+        return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+      });
+      return parts[0] * 0.2126 + parts[1] * 0.7152 + parts[2] * 0.0722;
+    }
+
+    function contrastRatio(foreground, background) {
+      const l1 = colorLuminance(foreground);
+      const l2 = colorLuminance(background);
+      return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+    }
+
+    function beautyOptions() {
+      return {
+        enabled: isBeautyEnabled(),
+        dark: normalizeHexColor(els.qrDarkText.value, "#111827"),
+        light: normalizeHexColor(els.qrLightText.value, "#ffffff"),
+        shape: els.qrShape.value,
+        frame: els.qrFrameStyle.value,
+        titlePosition: els.qrTitlePosition.value,
+        title: (els.qrTitleText.value || "").trim()
+      };
+    }
+
+    function syncBeautyControls() {
+      const enabled = isBeautyEnabled();
+      [
+        els.qrShape,
+        els.qrFrameStyle,
+        els.qrDarkColor,
+        els.qrDarkText,
+        els.qrLightColor,
+        els.qrLightText,
+        els.qrTitlePosition,
+        els.qrTitleText
+      ].forEach((control) => control.disabled = !enabled);
+    }
+
+    function applyBeautyPreset(name, shouldRedraw = true) {
+      const preset = beautyPresets[name] || beautyPresets.card;
+      els.beautyToggle.checked = preset.enabled;
+      els.qrShape.value = preset.shape;
+      els.qrFrameStyle.value = preset.frame;
+      els.qrTitlePosition.value = preset.titlePosition;
+      els.qrTitleText.value = preset.title;
+      setBeautyColor("dark", preset.dark);
+      setBeautyColor("light", preset.light);
+      syncBeautyControls();
+      if (shouldRedraw) {
+        redrawCurrentQr("二维码美化已更新");
+      }
+    }
+
+    function drawCenteredText(context, text, x, y, width, height, color, weight = 800) {
+      if (!text) return;
+      let fontSize = Math.round(height * 0.43);
+      const fontFamily = '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif';
+      context.save();
+      context.fillStyle = color;
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.font = `${weight} ${fontSize}px ${fontFamily}`;
+      while (fontSize > 12 && context.measureText(text).width > width * 0.9) {
+        fontSize -= 1;
+        context.font = `${weight} ${fontSize}px ${fontFamily}`;
+      }
+      context.fillText(text, x + width / 2, y + height / 2, width * 0.92);
+      context.restore();
+    }
+
+    function drawQrModule(context, x, y, size, shape) {
+      if (shape === "dot") {
+        context.beginPath();
+        context.arc(x + size / 2, y + size / 2, size * 0.42, 0, Math.PI * 2);
+        context.fill();
+        return;
+      }
+
+      if (shape === "round") {
+        roundRect(context, x + size * 0.08, y + size * 0.08, size * 0.84, size * 0.84, size * 0.22);
+        context.fill();
+        return;
+      }
+
+      context.fillRect(Math.round(x), Math.round(y), Math.ceil(size), Math.ceil(size));
+    }
+
+    function isFinderModule(row, col, moduleCount) {
+      const inTop = row >= 0 && row < 7;
+      const inLeft = col >= 0 && col < 7;
+      const inRight = col >= moduleCount - 7 && col < moduleCount;
+      const inBottom = row >= moduleCount - 7 && row < moduleCount;
+      return (inTop && inLeft) || (inTop && inRight) || (inBottom && inLeft);
+    }
+
+    function drawFinderPattern(context, x, y, cell, options) {
+      const outer = cell * 7;
+      const middle = cell * 5;
+      const inner = cell * 3;
+      const radius = options.shape === "square" ? 0 : cell * 1.1;
+      context.fillStyle = options.dark;
+      roundRect(context, x, y, outer, outer, radius);
+      context.fill();
+      context.fillStyle = options.light;
+      roundRect(context, x + cell, y + cell, middle, middle, Math.max(0, radius - cell * 0.35));
+      context.fill();
+      context.fillStyle = options.dark;
+      roundRect(context, x + cell * 2, y + cell * 2, inner, inner, Math.max(0, radius - cell * 0.7));
+      context.fill();
+    }
+
+    function drawBeautyBase(context, size, options) {
+      context.clearRect(0, 0, size, size);
+      context.fillStyle = options.frame === "none" ? options.light : "#ffffff";
+      context.fillRect(0, 0, size, size);
+
+      if (!options.enabled) {
+        return { x: 0, y: 0, size };
+      }
+
+      const outerPad = Math.round(size * (options.frame === "none" ? 0.04 : 0.065));
+      const titleVisible = options.titlePosition !== "none" && options.title;
+      const titleHeight = titleVisible ? Math.round(size * 0.13) : 0;
+      const titleGap = titleVisible ? Math.round(size * 0.025) : 0;
+      const cardX = outerPad;
+      const cardY = outerPad;
+      const cardSize = size - outerPad * 2;
+
+      if (options.frame !== "none") {
+        context.save();
+        if (options.frame === "shadow") {
+          context.shadowColor = "rgba(15, 23, 42, 0.22)";
+          context.shadowBlur = Math.round(size * 0.035);
+          context.shadowOffsetY = Math.round(size * 0.015);
+        }
+        roundRect(context, cardX, cardY, cardSize, cardSize, Math.round(size * 0.055));
+        context.fillStyle = "#ffffff";
+        context.fill();
+        context.restore();
+
+        if (options.frame === "border" || options.frame === "card") {
+          context.strokeStyle = options.frame === "border" ? options.dark : "rgba(15, 23, 42, 0.14)";
+          context.lineWidth = Math.max(3, Math.round(size * 0.006));
+          roundRect(context, cardX, cardY, cardSize, cardSize, Math.round(size * 0.055));
+          context.stroke();
+        }
+      }
+
+      const innerPad = Math.round(size * (options.frame === "none" ? 0.05 : 0.09));
+      const available = size - innerPad * 2 - titleHeight - titleGap;
+      const qrSize = Math.max(1, Math.round(Math.min(size - innerPad * 2, available)));
+      const qrX = Math.round((size - qrSize) / 2);
+      let qrY = Math.round(innerPad + (available - qrSize) / 2);
+      let titleY = qrY + qrSize + titleGap;
+
+      if (options.titlePosition === "top" && titleVisible) {
+        titleY = innerPad;
+        qrY = Math.round(titleY + titleHeight + titleGap + (available - qrSize) / 2);
+      }
+
+      if (titleVisible) {
+        drawCenteredText(context, options.title, innerPad, titleY, size - innerPad * 2, titleHeight, options.dark, 850);
+      }
+
+      return { x: qrX, y: qrY, size: qrSize };
+    }
+
+    function drawStyledQrMatrix(qr, options) {
+      qrCanvas.width = 1024;
+      qrCanvas.height = 1024;
+      const context = qrCanvas.getContext("2d");
+      const area = drawBeautyBase(context, qrCanvas.width, options);
+      const moduleCount = qr.modules.size;
+      const margin = clamp(Math.round(Number(els.qrMargin.value) || 2), 1, 4);
+      const fullModules = moduleCount + margin * 2;
+      const cell = Math.floor(area.size / fullModules);
+      const actualSize = cell * fullModules;
+      const offsetX = Math.round(area.x + (area.size - actualSize) / 2);
+      const offsetY = Math.round(area.y + (area.size - actualSize) / 2);
+      const moduleX = (col) => offsetX + (col + margin) * cell;
+      const moduleY = (row) => offsetY + (row + margin) * cell;
+
+      context.fillStyle = options.light;
+      context.fillRect(offsetX, offsetY, actualSize, actualSize);
+      context.fillStyle = options.dark;
+      for (let row = 0; row < moduleCount; row++) {
+        for (let col = 0; col < moduleCount; col++) {
+          if (!qr.modules.get(row, col) || isFinderModule(row, col, moduleCount)) continue;
+          drawQrModule(context, moduleX(col), moduleY(row), cell, options.shape);
+        }
+      }
+
+      drawFinderPattern(context, moduleX(0), moduleY(0), cell, options);
+      drawFinderPattern(context, moduleX(moduleCount - 7), moduleY(0), cell, options);
+      drawFinderPattern(context, moduleX(0), moduleY(moduleCount - 7), cell, options);
+      applyLogoToQr({ x: offsetX + margin * cell, y: offsetY + margin * cell, size: moduleCount * cell });
+    }
+
+    function drawBeautifiedQrImage(sourceCanvas) {
+      const options = beautyOptions();
+      qrCanvas.width = 1024;
+      qrCanvas.height = 1024;
+      const context = qrCanvas.getContext("2d");
+
+      if (!options.enabled) {
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, qrCanvas.width, qrCanvas.height);
+        context.drawImage(sourceCanvas, 0, 0, qrCanvas.width, qrCanvas.height);
+        applyLogoToQr();
+        return;
+      }
+
+      const area = drawBeautyBase(context, qrCanvas.width, options);
+      context.fillStyle = options.light;
+      context.fillRect(area.x, area.y, area.size, area.size);
+      context.drawImage(sourceCanvas, 0, 0, sourceCanvas.width, sourceCanvas.height, area.x, area.y, area.size, area.size);
+      applyLogoToQr(area);
     }
 
     function centerLogoMode() {
@@ -1112,8 +1521,9 @@
       generateQr();
     }
 
-    function drawTextLogo(context, size) {
+    function drawTextLogo(context, area = { x: 0, y: 0, size: qrCanvas.width }) {
       const text = centerLogoText();
+      const size = area.size;
       const boxH = Math.round(size * 0.16);
       const minBoxW = Math.round(size * 0.30);
       const maxBoxW = Math.round(size * 0.54);
@@ -1129,8 +1539,8 @@
         textWidth = context.measureText(text).width;
       }
 
-      const x = Math.round((size - boxW) / 2);
-      const y = Math.round((size - boxH) / 2);
+      const x = Math.round(area.x + (size - boxW) / 2);
+      const y = Math.round(area.y + (size - boxH) / 2);
       roundRect(context, x, y, boxW, boxH, Math.round(boxH * 0.24));
       context.fillStyle = "#ffffff";
       context.fill();
@@ -1141,33 +1551,34 @@
       context.font = `800 ${fontSize}px ${fontFamily}`;
       context.textAlign = "center";
       context.textBaseline = "middle";
-      context.fillText(text, Math.round(size / 2), Math.round(size / 2 + boxH * 0.02), Math.round(boxW - boxH * 0.55));
+      context.fillText(text, Math.round(area.x + size / 2), Math.round(area.y + size / 2 + boxH * 0.02), Math.round(boxW - boxH * 0.55));
     }
 
-    function drawUploadedLogo(context, size) {
+    function drawUploadedLogo(context, area = { x: 0, y: 0, size: qrCanvas.width }) {
+      const size = area.size;
       const box = Math.round(size * 0.23);
       const inner = Math.round(size * 0.17);
-      const x = Math.round((size - box) / 2);
-      const y = Math.round((size - box) / 2);
+      const x = Math.round(area.x + (size - box) / 2);
+      const y = Math.round(area.y + (size - box) / 2);
       roundRect(context, x, y, box, box, Math.round(box * 0.18));
       context.fillStyle = "#ffffff";
       context.fill();
       const ratio = Math.min(inner / state.logo.naturalWidth, inner / state.logo.naturalHeight);
       const w = Math.round(state.logo.naturalWidth * ratio);
       const h = Math.round(state.logo.naturalHeight * ratio);
-      context.drawImage(state.logo, Math.round((size - w) / 2), Math.round((size - h) / 2), w, h);
+      context.drawImage(state.logo, Math.round(area.x + (size - w) / 2), Math.round(area.y + (size - h) / 2), w, h);
     }
 
-    function applyLogoToQr() {
+    function applyLogoToQr(area) {
       if (!els.logoToggle.checked) return;
       const qrCtx = qrCanvas.getContext("2d");
-      const size = qrCanvas.width;
+      const target = area || { x: 0, y: 0, size: qrCanvas.width };
       if (centerLogoMode() === "image" && state.logo) {
-        drawUploadedLogo(qrCtx, size);
+        drawUploadedLogo(qrCtx, target);
         return;
       }
       if (centerLogoMode() === "text") {
-        drawTextLogo(qrCtx, size);
+        drawTextLogo(qrCtx, target);
       }
     }
 
@@ -1263,13 +1674,14 @@
       };
 
       const crop = squareCropBounds(bounds, workingCanvas.width, workingCanvas.height);
-      qrCanvas.width = 1024;
-      qrCanvas.height = 1024;
-      const qrCtx = qrCanvas.getContext("2d");
-      qrCtx.fillStyle = "#ffffff";
-      qrCtx.fillRect(0, 0, qrCanvas.width, qrCanvas.height);
-      qrCtx.drawImage(workingCanvas, crop.x, crop.y, crop.size, crop.size, 0, 0, qrCanvas.width, qrCanvas.height);
-      applyLogoToQr();
+      const sourceCanvas = document.createElement("canvas");
+      sourceCanvas.width = 1024;
+      sourceCanvas.height = 1024;
+      const sourceCtx = sourceCanvas.getContext("2d");
+      sourceCtx.fillStyle = "#ffffff";
+      sourceCtx.fillRect(0, 0, sourceCanvas.width, sourceCanvas.height);
+      sourceCtx.drawImage(workingCanvas, crop.x, crop.y, crop.size, crop.size, 0, 0, sourceCanvas.width, sourceCanvas.height);
+      drawBeautifiedQrImage(sourceCanvas);
       return true;
     }
 
@@ -1294,6 +1706,36 @@
 
       const generation = ++state.qrGeneration;
       setStatus("正在生成二维码");
+
+      const finish = () => {
+        state.qrReady = true;
+        state.qrSource = "link";
+        state.qrImageFileName = "";
+        state.qrImageOriginal = null;
+        els.qrImageName.textContent = "由链接生成";
+        setStatus(posterReady() ? "二维码已生成，可拖拽调整" : "二维码已生成，等待上传海报", "ok");
+        render();
+      };
+
+      if (isBeautyEnabled() && typeof window.QRCode.create === "function") {
+        try {
+          const options = beautyOptions();
+          const qr = window.QRCode.create(text, { errorCorrectionLevel: "H" });
+          drawStyledQrMatrix(qr, options);
+          if (generation !== state.qrGeneration) return;
+          finish();
+          if (contrastRatio(options.dark, options.light) < 4.5) {
+            setStatus("二维码已生成；当前颜色对比偏低，建议手机实测扫码", "danger");
+          }
+        } catch (error) {
+          state.qrReady = false;
+          setStatus("二维码美化生成失败，请检查链接内容", "danger");
+          updateMeta();
+          render();
+        }
+        return;
+      }
+
       window.QRCode.toCanvas(qrCanvas, text, {
         width: 1024,
         margin: clamp(Math.round(Number(els.qrMargin.value) || 2), 1, 4),
@@ -1312,13 +1754,7 @@
           return;
         }
         applyLogoToQr();
-        state.qrReady = true;
-        state.qrSource = "link";
-        state.qrImageFileName = "";
-        state.qrImageOriginal = null;
-        els.qrImageName.textContent = "由链接生成";
-        setStatus(posterReady() ? "二维码已生成，可拖拽调整" : "二维码已生成，等待上传海报", "ok");
-        render();
+        finish();
       });
     }
 
@@ -1597,6 +2033,57 @@
       setStatus("已触发保存；如果没有反应，请右键预览图保存", "ok");
     }
 
+    function qrOnlyFileName() {
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "");
+      const label = isBeautyEnabled() ? "美化二维码" : "二维码";
+      return `${label}_${stamp}.png`;
+    }
+
+    async function saveQrOnlyPng() {
+      if (!state.qrReady) {
+        setStatus("请先生成或上传二维码", "danger");
+        return;
+      }
+
+      try {
+        const blob = await canvasToBlob(qrCanvas);
+        const fileName = qrOnlyFileName();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        setStatus("二维码 PNG 已生成", "ok");
+      } catch (error) {
+        setStatus(`二维码保存失败：${error.message}`, "danger");
+      }
+    }
+
+    async function copyQrOnlyPng() {
+      if (!state.qrReady) {
+        setStatus("请先生成或上传二维码", "danger");
+        return;
+      }
+
+      try {
+        if (!navigator.clipboard || !window.ClipboardItem) {
+          throw new Error("当前浏览器不支持图片剪贴板");
+        }
+        const blobPromise = canvasToBlob(qrCanvas);
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": blobPromise })
+        ]);
+        await blobPromise;
+        setStatus("二维码 PNG 已复制，可直接粘贴使用", "ok");
+      } catch (error) {
+        setStatus(`二维码复制失败：${error.message}`, "danger");
+      }
+    }
+
     function clearAll() {
       state.poster = null;
       state.posterFileName = "";
@@ -1632,6 +2119,15 @@
       els.qrMarginNumber.value = "2";
       els.basePadding.value = "2";
       els.basePaddingNumber.value = "2";
+      els.beautyPreset.value = "card";
+      els.beautyToggle.checked = false;
+      els.qrShape.value = "round";
+      els.qrFrameStyle.value = "card";
+      setBeautyColor("dark", "#111827");
+      setBeautyColor("light", "#ffffff");
+      els.qrTitlePosition.value = "bottom";
+      els.qrTitleText.value = "扫码观看直播";
+      syncBeautyControls();
       setStatus("等待上传海报");
       render();
     }
@@ -1780,6 +2276,53 @@
       });
     });
 
+    els.beautyToggle.addEventListener("change", () => {
+      syncBeautyControls();
+      redrawCurrentQr(els.beautyToggle.checked ? "二维码美化已开启" : "二维码美化已关闭");
+    });
+
+    els.beautyPreset.addEventListener("change", () => {
+      applyBeautyPreset(els.beautyPreset.value);
+    });
+
+    [els.qrShape, els.qrFrameStyle, els.qrTitlePosition].forEach((input) => {
+      input.addEventListener("change", () => {
+        redrawCurrentQr("二维码美化已更新");
+      });
+    });
+
+    els.qrTitleText.addEventListener("input", () => {
+      window.clearTimeout(els.qrTitleText._timer);
+      els.qrTitleText._timer = window.setTimeout(() => {
+        redrawCurrentQr("二维码标题已更新");
+      }, 180);
+    });
+
+    [
+      [els.qrDarkColor, "dark"],
+      [els.qrLightColor, "light"]
+    ].forEach(([input, kind]) => {
+      input.addEventListener("input", () => {
+        setBeautyColor(kind, input.value);
+        redrawCurrentQr("二维码颜色已更新");
+      });
+    });
+
+    [
+      [els.qrDarkText, "dark"],
+      [els.qrLightText, "light"]
+    ].forEach(([input, kind]) => {
+      input.addEventListener("input", () => {
+        if (!/^#?[0-9a-fA-F]{6}$/.test(input.value.trim())) return;
+        setBeautyColor(kind, input.value);
+        redrawCurrentQr("二维码颜色已更新");
+      });
+      input.addEventListener("blur", () => {
+        setBeautyColor(kind, input.value);
+        redrawCurrentQr("二维码颜色已更新");
+      });
+    });
+
     [els.sizeRange, els.sizeNumber].forEach((input) => {
       input.addEventListener("input", () => {
         setBox({ size: Number(input.value) || state.qrBox.size });
@@ -1818,6 +2361,8 @@
     els.copyExportButton.addEventListener("click", copyExportedPng);
     els.saveExportButton.addEventListener("click", saveExportedPng);
     els.copyResultButton.addEventListener("click", copyExportedPng);
+    els.copyQrOnlyButton.addEventListener("click", copyQrOnlyPng);
+    els.saveQrOnlyButton.addEventListener("click", saveQrOnlyPng);
 
     [els.openExportLink, els.exportTextLink].forEach((link) => {
       link.addEventListener("click", (event) => {
@@ -1887,6 +2432,7 @@
       setBox(changes[event.key]);
     });
 
+    syncBeautyControls();
     syncLogoControls();
     render();
   </script>
